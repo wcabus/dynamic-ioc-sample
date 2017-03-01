@@ -80,7 +80,8 @@ namespace Sample
         {
             return new AppDomainSetup
             {
-                ApplicationBase = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", folder, "bin", "Debug")
+                ApplicationBase = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", folder, "bin", "Debug")),
+                ShadowCopyFiles = "true"
             };
         }
     }
