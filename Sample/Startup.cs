@@ -20,11 +20,6 @@ namespace Sample
 
         private static bool _assemblySwitch = true;
 
-        private static readonly AppDomainSetup Domaininfo = new AppDomainSetup
-        {
-            ApplicationBase = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin")
-        };
-
         public void Configuration(IAppBuilder app)
         {
             var config = new HttpConfiguration();
@@ -56,12 +51,14 @@ namespace Sample
                     AppDomain.Unload(_domain);
                 }
 
-                _domain = AppDomain.CreateDomain("Sample.IOC", AppDomain.CurrentDomain.Evidence, Domaininfo);
+                _domain = AppDomain.CreateDomain("Sample.IOC", AppDomain.CurrentDomain.Evidence,
+                    _assemblySwitch
+                        ? GetAppDomainSetup("Sample.Repositories")
+                        : GetAppDomainSetup("Sample.Repositories.Alternative"));
 
                 var asmName = AssemblyName.GetAssemblyName(
-                    Path.Combine(Domaininfo.ApplicationBase, 
-                    _assemblySwitch 
-                        ? "Sample.Repositories.dll" 
+                    Path.Combine(_domain.SetupInformation.ApplicationBase, _assemblySwitch
+                        ? "Sample.Repositories.dll"
                         : "Sample.Repositories.Alternative.dll"));
 
                 var assembly = _domain.Load(asmName.FullName);
@@ -77,6 +74,14 @@ namespace Sample
 
             var container = builder.Build();
             config.DependencyResolver = new AutofacWebApiDependencyResolver(container);
+        }
+
+        private static AppDomainSetup GetAppDomainSetup(string folder)
+        {
+            return new AppDomainSetup
+            {
+                ApplicationBase = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", folder, "bin", "Debug")
+            };
         }
     }
 }
